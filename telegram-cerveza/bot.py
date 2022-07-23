@@ -1,7 +1,7 @@
 import logging
 
 from config import get_config
-from db import remove_user, save_user
+from db import db
 from job import TheArmagedon
 from telegram import Bot, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -19,12 +19,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("No tienes permiso para usar este bot, pirate de aqui anda")
         return
 
-    save_user(id)
+    db.save_user(id)
     await update.message.reply_text("Comienza la salsa")
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    remove_user(update.effective_user.id)
+    db.remove_user(update.effective_user.id)
     await update.message.reply_text("Bye papi")
 
 
