@@ -10,8 +10,8 @@ MALT_SITE = SITE + "/malta.html"
 
 
 def get_beer_status():
-    pass
+    return 2
 
 
 def get_malt_status():
-    pass
+    return 2
