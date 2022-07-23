@@ -10,7 +10,7 @@ class Status:
     NOT_FOUND = 2
 
 
-INITIAL_STATE = Status.NOT_FOUND
+INITIAL_STATE = Status.FOUND
 
 
 @dataclass
@@ -44,12 +44,16 @@ class SQLiteDB:
 
 
 class PostgreSqlDB:
-    def __init__(self, user, passw, host, dbname="micerveza") -> None:
-        self.dbname = dbname
-        self.conn = psycopg2.connect(host=host, database=dbname, user=user, password=passw)
+    def __init__(self, database_url) -> None:
+        self.database_url = database_url
+        self.conn = None
+
+    def connect(self):
+        self.conn = psycopg2.connect(self.database_url, sslmode="require")
 
     def exec(self, stmt, args=(), commit=True):
         stmt = stmt.replace("?", "%s")
+        self.connect()
         cursor = self.conn.cursor()
         try:
             cursor.execute(stmt, args)
@@ -62,6 +66,8 @@ class PostgreSqlDB:
             return None
         finally:
             cursor.close()
+            if commit:
+                self.conn.close()
 
     def commit(self):
         self.conn.commit()
@@ -96,12 +102,14 @@ class DB(PostgreSqlDB):
             args = (user.malta_last_status, user.cerveza_last_status, user.id)
             self.exec(stmt, args, commit=False)
         self.commit()
+        self.conn.close()
 
 
-db = DB(
-    os.environ.get("POSTGRES_USER"),
-    os.environ.get("POSTGRES_PASSWORD"),
-    os.environ.get("POSTGRES_HOST", "localhost"),
-    os.environ.get("POSTGRES_DBNAME", "micerveza"),
-)
+user = os.environ.get("POSTGRES_USER")
+passw = os.environ.get("POSTGRES_PASSWORD")
+dbname = os.environ.get("POSTGRES_DBNAME", "micerveza")
+
+database_url = os.environ.get("DATABASE_URL", f"postgresql://{user}:{passw}@localhost:5432/{dbname}")
+db = DB(database_url)
+# db.exec("DELETE FROM users")
 db.setup()

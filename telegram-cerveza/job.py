@@ -18,18 +18,18 @@ class TheArmagedon:
     async def _start_the_circus(self):
         while True:
             users = db.get_users()
-            malt_status = get_malt_status()
-            beer_status = get_beer_status()
+            current_malta_status = get_malt_status()
+            current_cerveza_status = get_beer_status()
 
             for user in users:
-                beer_status_last = user.cerveza_last_status
-                if beer_status != beer_status_last:
-                    await self.notify_user(beer_status, user, "cerveza")
-                    user.cerveza_last_status = beer_status
-                malt_status_last = user.malta_last_status
-                if malt_status != malt_status_last:
-                    await self.notify_user(malt_status, user, "malta")
-                    user.malta_last_status = malt_status
+                last_cerveza_status = user.cerveza_last_status
+                if current_cerveza_status != last_cerveza_status:
+                    await self.notify_user(current_cerveza_status, user, "cerveza")
+                    user.cerveza_last_status = current_cerveza_status
+                last_malta_status = user.malta_last_status
+                if current_malta_status != last_malta_status:
+                    await self.notify_user(current_malta_status, user, "malta")
+                    user.malta_last_status = current_malta_status
 
             db.bulk_update_users(users)
 

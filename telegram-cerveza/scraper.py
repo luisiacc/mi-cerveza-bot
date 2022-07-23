@@ -16,9 +16,9 @@ MALT_SITE = SITE + "/caja-malta.html"
 def get_status(response):
     soup = BeautifulSoup(response.text, "lxml")
     for item in soup.find_all("div", class_="product-info-stock-sku"):
-        if "unavailable" in item.div["class"]:
-            return Status.NOT_FOUND
-    return Status.FOUND
+        if "unavailable" not in item.div["class"]:
+            return Status.FOUND
+    return Status.NOT_FOUND
 
 
 def get_beer_status():
