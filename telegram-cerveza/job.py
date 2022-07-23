@@ -4,7 +4,6 @@ from threading import Thread
 
 from db import Status, bulk_save_users, get_users
 from scraper import get_beer_status, get_malt_status
-from telegram.ext import ContextTypes
 
 INTERVAL = 5
 
@@ -23,22 +22,30 @@ class TheArmagedon:
             beer_status = get_beer_status()
 
             for user in users:
-                await self.bot.send_message(chat_id=user["id"], text="Hay cacaaaaa, correeeeee!")
                 beer_status_last = user["cerveza_last_status"]
                 if beer_status != beer_status_last:
-                    await self.notify_user(user, "cerveza")
+                    await self.notify_user(beer_status, user, "cerveza")
                     user["cerveza_last_status"] = beer_status
                 malt_status_last = user["malta_last_status"]
                 if malt_status != malt_status_last:
-                    await self.notify_user(user, "malta")
+                    await self.notify_user(malt_status, user, "malta")
                     user["malta_last_status"] = malt_status
 
             bulk_save_users(users)
 
             time.sleep(INTERVAL)
 
-    async def notify_user(self, user, item):
-        await self.bot.send_message(chat_id=user["id"], text=f"Hay {item}, correeeeee!")
+    async def notify_user(self, status, user, item):
+        if status == Status.NOT_FOUND:
+            await self.notify_user_ran_out(user, item)
+        else:
+            await self.notify_user_found(user, item)
+
+    async def notify_user_found(self, user, item):
+        await self.bot.send_message(chat_id=user["id"], text=f"Llego {item} a la bodega, correeeeee!")
+
+    async def notify_user_ran_out(self, user, item):
+        await self.bot.send_message(chat_id=user["id"], text=f"Se acabo la {item}!")
 
     def run(self):
         loop = asyncio.new_event_loop()
