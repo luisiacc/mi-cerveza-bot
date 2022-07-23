@@ -1,6 +1,6 @@
 import logging
+import os
 
-from config import get_config
 from db import db
 from job import TheArmagedon
 from telegram import Bot, Update
@@ -28,7 +28,7 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Bye papi")
 
 
-token = get_config().get("token", "")
+token = os.environ.get("TOKEN")
 
 job = TheArmagedon(Bot(token=token))
 job.start_the_circus()
