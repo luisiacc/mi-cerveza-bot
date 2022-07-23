@@ -1,1 +1,1 @@
-worker: python telegram-cerveza/bot.py
+web: python ./telegram-cerveza/bot.py
