@@ -1,11 +1,12 @@
 import asyncio
+import os
 import time
 from threading import Thread
 
 from db import Status, db
 from scraper import get_beer_status, get_malt_status
 
-INTERVAL = 5
+INTERVAL = int(os.environ.get("INTERVAL", 30))
 
 
 class TheArmagedon:
