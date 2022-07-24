@@ -2,8 +2,7 @@ import logging
 import os
 
 from db import db
-from job import TheArmagedon
-from telegram import Bot, Update
+from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 allowed_users = ["luisiacc", "Demonge"]
@@ -35,8 +34,6 @@ async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 token = os.environ.get("TOKEN")
 
 db.setup()
-job = TheArmagedon(Bot(token=token))
-job.start_the_circus()
 
 app = ApplicationBuilder().token(token).build()
 app.add_handler(CommandHandler("hello", hello))
