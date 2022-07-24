@@ -34,6 +34,7 @@ async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 token = os.environ.get("TOKEN")
 
+db.setup()
 job = TheArmagedon(Bot(token=token))
 job.start_the_circus()
 

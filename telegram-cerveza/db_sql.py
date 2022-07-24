@@ -10,7 +10,7 @@ class Status:
     NOT_FOUND = 2
 
 
-INITIAL_STATE = Status.FOUND
+INITIAL_STATE = Status.NOT_FOUND
 
 
 @dataclass
@@ -57,9 +57,9 @@ class PostgreSqlDB:
         cursor = self.conn.cursor()
         try:
             cursor.execute(stmt, args)
-            result = cursor.fetchall()
             if commit:
                 self.commit()
+            result = cursor.fetchall()
             return result
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
@@ -111,5 +111,3 @@ dbname = os.environ.get("POSTGRES_DBNAME", "micerveza")
 
 database_url = os.environ.get("DATABASE_URL", f"postgresql://{user}:{passw}@localhost:5432/{dbname}")
 db = DB(database_url)
-# db.exec("DELETE FROM users")
-db.setup()
