@@ -1,2 +1,2 @@
-worker: python ./telegram-cerveza/bot.py
-worker: python ./telegram-cerveza/job.py
+worker-bot: python ./telegram-cerveza/bot.py
+worker-job: python ./telegram-cerveza/job.py
