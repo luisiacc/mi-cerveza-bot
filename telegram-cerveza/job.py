@@ -21,6 +21,7 @@ class TheArmagedon:
             users = db.get_users()
             current_malta_status = get_malt_status()
             current_cerveza_status = get_beer_status()
+            print(f"getting state {current_malta_status=} {current_cerveza_status=}")
 
             for user in users:
                 last_cerveza_status = user.cerveza_last_status

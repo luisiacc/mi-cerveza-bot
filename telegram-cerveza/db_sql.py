@@ -84,10 +84,12 @@ class DB(PostgreSqlDB):
     def add_user(self, id):
         stmt = "INSERT INTO users SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = ?)"
         args = (id, INITIAL_STATE, INITIAL_STATE, id)
+        print("adding user", id)
         self.exec(stmt, args)
 
     def remove_user(self, id):
         stmt = "DELETE FROM users WHERE id = (?)"
+        print("removing user", id)
         self.exec(stmt, (id,))
 
     def get_users(self):
