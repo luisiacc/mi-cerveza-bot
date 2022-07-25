@@ -4,7 +4,7 @@ import threading
 import time
 
 from db import Status, db
-from scraper import get_beer_status, get_malt_status
+from scraper import BEER_SITE, MALT_SITE, get_beer_status, get_malt_status
 from telegram import Bot
 
 INTERVAL = int(os.environ.get("INTERVAL", 30))
@@ -39,7 +39,8 @@ class TheArmagedon:
             await self.notify_user_found(user, item)
 
     async def notify_user_found(self, user, item):
-        await self.bot.send_message(chat_id=user.id, text=f"Llego {item} a la bodega, correeeeee!")
+        url = BEER_SITE if item == "cerveza" else MALT_SITE
+        await self.bot.send_message(chat_id=user.id, text=f"Llego {item} a la bodega, correeeeee! {url}")
 
     async def notify_user_ran_out(self, user, item):
         await self.bot.send_message(chat_id=user.id, text=f"Se acabo la {item}!")
