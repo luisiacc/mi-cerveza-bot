@@ -4,7 +4,7 @@ import threading
 import time
 
 from db import Status, db
-from scraper import BEER_SITE, MALT_SITE, get_beer_status, get_malt_status
+from scraper import get_site_status
 from telegram import Bot
 
 INTERVAL = int(os.environ.get("INTERVAL", 30))
@@ -16,34 +16,51 @@ class TheArmagedon:
 
     async def perform_scraping(self):
         users = db.get_users()
-        current_malta_status = get_malt_status()
-        current_cerveza_status = get_beer_status()
-        print(f"getting state {current_malta_status=} {current_cerveza_status=}")
+        all_statuses = await get_site_status()
+
+        if not all_statuses:
+            print("Failed getting status")
+            return
+
+        current_malta_status, malta_site = all_statuses["malt"]
+        current_cerveza_status, beer_site = all_statuses["beer"]
+        current_bucanero_cerveza_status, bucanero_beer_site = all_statuses["bucanero_beer"]
+
+        print(f"getting state {all_statuses=}")
 
         for user in users:
-            last_cerveza_status = user.cerveza_last_status
-            if current_cerveza_status != last_cerveza_status:
-                await self.notify_user(current_cerveza_status, user, "cerveza")
+            if current_cerveza_status != user.cerveza_last_status:
+                await self.notify_user(current_cerveza_status, user, "cerveza cristal", beer_site)
                 user.cerveza_last_status = current_cerveza_status
-            last_malta_status = user.malta_last_status
-            if current_malta_status != last_malta_status:
-                await self.notify_user(current_malta_status, user, "malta")
+
+            if current_bucanero_cerveza_status != user.cerveza_bucanero_last_status:
+                await self.notify_user(current_bucanero_cerveza_status, user, "cerveza bucanero", bucanero_beer_site)
+                user.cerveza_bucanero_last_status = current_bucanero_cerveza_status
+
+            if current_malta_status != user.malta_last_status:
+                await self.notify_user(current_malta_status, user, "malta", malta_site)
                 user.malta_last_status = current_malta_status
 
         db.bulk_update_users(users)
 
-    async def notify_user(self, status, user, item):
+    async def notify_user(self, status, user, item, url):
+        print("notifying", user.id, item, status)
         if status == Status.NOT_FOUND:
             await self.notify_user_ran_out(user, item)
         else:
-            await self.notify_user_found(user, item)
+            await self.notify_user_found(user, item, url)
 
-    async def notify_user_found(self, user, item):
-        url = BEER_SITE if item == "cerveza" else MALT_SITE
-        await self.bot.send_message(chat_id=user.id, text=f"Llego {item} a la bodega, correeeeee! {url}")
+    async def notify_user_found(self, user, item, url):
+        try:
+            await self.bot.send_message(chat_id=user.id, text=f"Llego {item} a la bodega, correeeeee! {url}")
+        except Exception as e:
+            print(e)
 
     async def notify_user_ran_out(self, user, item):
-        await self.bot.send_message(chat_id=user.id, text=f"Se acabo la {item}!")
+        try:
+            await self.bot.send_message(chat_id=user.id, text=f"Se acabo la {item}!")
+        except Exception as e:
+            print(e)
 
     def run(self):
         loop = asyncio.new_event_loop()
