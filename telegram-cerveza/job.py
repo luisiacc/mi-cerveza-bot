@@ -42,9 +42,11 @@ class TheArmagedon:
                 user.malta_last_status = current_malta_status
 
         db.bulk_update_users(users)
+        print(users)
 
     async def notify_user(self, status, user, item, url):
         print("notifying", user.id, item, status)
+        time.sleep(1)
         if status == Status.NOT_FOUND:
             await self.notify_user_ran_out(user, item)
         else:
