@@ -54,13 +54,15 @@ class TheArmagedon:
 
     async def notify_user_found(self, user, item, url):
         try:
-            await self.bot.send_message(chat_id=user.id, text=f"Llego {item} a la bodega, correeeeee! {url}")
+            await self.bot.send_message(
+                chat_id=user.id, text=f"Llego {item} a la bodega, correeeeee! {url}", pool_timeout=20
+            )
         except Exception as e:
             print(e)
 
     async def notify_user_ran_out(self, user, item):
         try:
-            await self.bot.send_message(chat_id=user.id, text=f"Se acabo la {item}!")
+            await self.bot.send_message(chat_id=user.id, text=f"Se acabo la {item}!", pool_timeout=20)
         except Exception as e:
             print(e)
 
