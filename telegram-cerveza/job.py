@@ -6,6 +6,7 @@ import time
 from db import Status, db
 from scraper import get_site_status
 from telegram import Bot
+from telegram.request import HTTPXRequest
 
 INTERVAL = int(os.environ.get("INTERVAL", 30))
 
@@ -54,15 +55,13 @@ class TheArmagedon:
 
     async def notify_user_found(self, user, item, url):
         try:
-            await self.bot.send_message(
-                chat_id=user.id, text=f"Llego {item} a la bodega, correeeeee! {url}", pool_timeout=20
-            )
+            await self.bot.send_message(chat_id=user.id, text=f"Llego {item} a la bodega, correeeeee! {url}")
         except Exception as e:
             print(e)
 
     async def notify_user_ran_out(self, user, item):
         try:
-            await self.bot.send_message(chat_id=user.id, text=f"Se acabo la {item}!", pool_timeout=20)
+            await self.bot.send_message(chat_id=user.id, text=f"Se acabo la {item}!")
         except Exception as e:
             print(e)
 
@@ -75,7 +74,8 @@ class TheArmagedon:
 
 if __name__ == "__main__":
     token = os.environ.get("TOKEN", "")
-    job = TheArmagedon(Bot(token=token))
     ticker = threading.Event()
     while not ticker.wait(INTERVAL):
+        request = HTTPXRequest(connection_pool_size=8, pool_timeout=5.0)
+        job = TheArmagedon(Bot(token=token, request=request))
         job.run()
