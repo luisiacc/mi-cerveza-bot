@@ -3,12 +3,22 @@ import os
 import threading
 import time
 
-from db import Status, db
+from db import Status, db, initial_status
 from scraper import get_site_status
 from telegram import Bot
 from telegram.request import HTTPXRequest
 
 INTERVAL = int(os.environ.get("INTERVAL", 30))
+
+
+def pretty_print_statuses(statuses):
+    print(
+        f"""
+    malta: {statuses['malt'][0]}
+    cerveza: {statuses['beer'][0]}
+    cerveza bucanero: {statuses['bucanero_beer'][0]}
+    """
+    )
 
 
 class TheArmagedon:
@@ -27,20 +37,22 @@ class TheArmagedon:
         current_cerveza_status, beer_site = all_statuses["beer"]
         current_bucanero_cerveza_status, bucanero_beer_site = all_statuses["bucanero_beer"]
 
-        print(f"getting state {all_statuses=}")
+        pretty_print_statuses(all_statuses)
 
         for user in users:
-            if current_cerveza_status != user.cerveza_last_status:
+            if not user.status:
+                user.status = initial_status
+            if current_cerveza_status != user.status["cerveza_last_status"]:
                 await self.notify_user(current_cerveza_status, user, "cerveza cristal", beer_site)
-                user.cerveza_last_status = current_cerveza_status
+                user.status["cerveza_last_status"] = current_cerveza_status
 
-            if current_bucanero_cerveza_status != user.cerveza_bucanero_last_status:
+            if current_bucanero_cerveza_status != user.status["cerveza_bucanero_last_status"]:
                 await self.notify_user(current_bucanero_cerveza_status, user, "cerveza bucanero", bucanero_beer_site)
-                user.cerveza_bucanero_last_status = current_bucanero_cerveza_status
+                user.status["cerveza_bucanero_last_status"] = current_bucanero_cerveza_status
 
-            if current_malta_status != user.malta_last_status:
+            if current_malta_status != user.status["malta_last_status"]:
                 await self.notify_user(current_malta_status, user, "malta", malta_site)
-                user.malta_last_status = current_malta_status
+                user.status["malta_last_status"] = current_malta_status
 
         db.bulk_update_users(users)
         print(users)

@@ -1,8 +1,10 @@
+import json
 import os
 import sqlite3
 from dataclasses import dataclass
 
 import psycopg2
+from typing_extensions import TypedDict
 
 
 class Status:
@@ -12,13 +14,26 @@ class Status:
 
 INITIAL_STATE = Status.NOT_FOUND
 
+UserStatus = TypedDict(
+    "UserStatus",
+    {
+        "malta_last_status": int,
+        "cerveza_last_status": int,
+        "cerveza_bucanero_last_status": int,
+    },
+)
+
+initial_status: UserStatus = {
+    "malta_last_status": Status.NOT_FOUND,
+    "cerveza_last_status": Status.NOT_FOUND,
+    "cerveza_bucanero_last_status": Status.NOT_FOUND,
+}
+
 
 @dataclass
 class User:
     id: int
-    malta_last_status: int
-    cerveza_last_status: int
-    cerveza_bucanero_last_status: int
+    status: UserStatus
 
 
 class SQLiteDB:
@@ -40,7 +55,7 @@ class SQLiteDB:
         return self.exec(stmt, commit=False)
 
     def setup(self):
-        stmt = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, malta_last_status INTEGER, cerveza_last_status INTEGER)"
+        stmt = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, status JSON)"
         self.exec(stmt)
 
 
@@ -77,14 +92,14 @@ class PostgreSqlDB:
         return self.exec(stmt, commit=False)
 
     def setup(self):
-        stmt = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, malta_last_status INTEGER, cerveza_last_status INTEGER, cerveza_bucanero_last_status INTEGER)"
+        stmt = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, status JSON)"
         self.exec(stmt)
 
 
 class DB(PostgreSqlDB):
     def add_user(self, id):
-        stmt = "INSERT INTO users SELECT ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = ?)"
-        args = (id, INITIAL_STATE, INITIAL_STATE, INITIAL_STATE, id)
+        stmt = "INSERT INTO users SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = ?)"
+        args = (id, json.dumps(initial_status), id)
         print("adding user", id)
         self.exec(stmt, args)
 
@@ -101,8 +116,8 @@ class DB(PostgreSqlDB):
 
     def bulk_update_users(self, users):
         for user in users:
-            stmt = "UPDATE users SET malta_last_status = ?, cerveza_last_status = ?, cerveza_bucanero_last_status = ? WHERE id = ?"
-            args = (user.malta_last_status, user.cerveza_last_status, user.cerveza_bucanero_last_status, user.id)
+            stmt = "UPDATE users SET status = ? WHERE id = ?"
+            args = (json.dumps(user.status), user.id)
             self.exec(stmt, args, commit=False)
         self.commit()
         self.conn.close()
