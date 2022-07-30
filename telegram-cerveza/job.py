@@ -52,7 +52,7 @@ class TheArmagedon:
                 user.status["malta_last_status"] = current_malta_status
 
         db.bulk_update_users(users)
-        print(users)
+        print(db.get_users())
 
     async def notify_user(self, status, user, item, url):
         print("notifying", user.id, item, status)
@@ -85,6 +85,6 @@ if __name__ == "__main__":
     token = os.environ.get("TOKEN", "")
     ticker = threading.Event()
     while not ticker.wait(INTERVAL):
-        request = HTTPXRequest(connection_pool_size=8, pool_timeout=5.0)
+        request = HTTPXRequest(connection_pool_size=8, pool_timeout=5.0, connect_timeout=5.0)
         job = TheArmagedon(Bot(token=token, request=request))
         job.run()

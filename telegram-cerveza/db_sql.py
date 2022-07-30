@@ -1,9 +1,14 @@
+import contextlib
 import json
 import os
 from dataclasses import dataclass
 
 import psycopg2
+from psycopg2.extensions import register_adapter
+from psycopg2.extras import Json, execute_values
 from typing_extensions import TypedDict
+
+register_adapter(dict, Json)
 
 
 class Status:
@@ -43,16 +48,14 @@ class PostgreSqlDB:
     def connect(self):
         self.conn = psycopg2.connect(self.database_url, sslmode="require")
 
-    def exec(self, stmt, args=(), commit=True):
-        stmt = stmt.replace("?", "%s")
+    @contextlib.contextmanager
+    def prepare_connection(self, commit=True):
         self.connect()
         cursor = self.conn.cursor()
         try:
-            cursor.execute(stmt, args)
+            yield cursor
             if commit:
                 self.commit()
-            result = cursor.fetchall()
-            return result
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
             return None
@@ -61,11 +64,18 @@ class PostgreSqlDB:
             if commit:
                 self.conn.close()
 
+    def exec(self, stmt, args=(), commit=True, return_results=False):
+        stmt = stmt.replace("?", "%s")
+        with self.prepare_connection(commit=commit) as cursor:
+            cursor.execute(stmt, args)
+            if return_results:
+                return cursor.fetchall()
+
     def commit(self):
         self.conn.commit()
 
     def select(self, stmt):
-        return self.exec(stmt, commit=False)
+        return self.exec(stmt, commit=False, return_results=True)
 
     def setup(self):
         stmt = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, status JSON)"
@@ -91,12 +101,13 @@ class DB(PostgreSqlDB):
         return [User(*item) for item in items]
 
     def bulk_update_users(self, users):
-        for user in users:
-            stmt = "UPDATE users SET status = ? WHERE id = ?"
-            args = (json.dumps(user.status), user.id)
-            self.exec(stmt, args, commit=False)
-        self.commit()
-        self.conn.close()
+        def user_row(user):
+            return (user.id, user.status)
+
+        stmt = "UPDATE users SET status = payload.status::json FROM (VALUES %s) as payload (id, status) WHERE users.id = payload.id"
+        args = [user_row(user) for user in users]
+        with self.prepare_connection() as cursor:
+            execute_values(cursor, stmt, args)
 
 
 user = os.environ.get("POSTGRES_USER")
