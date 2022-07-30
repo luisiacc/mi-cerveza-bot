@@ -1,6 +1,5 @@
 import json
 import os
-import sqlite3
 from dataclasses import dataclass
 
 import psycopg2
@@ -34,29 +33,6 @@ initial_status: UserStatus = {
 class User:
     id: int
     status: UserStatus
-
-
-class SQLiteDB:
-    def __init__(self, dbname="db.sqlite") -> None:
-        self.dbname = dbname
-        self.conn = sqlite3.connect(dbname)
-
-    def exec(self, stmt, args=(), commit=True):
-        result = self.conn.execute(stmt, args)
-        if commit:
-            self.commit()
-
-        return result
-
-    def commit(self):
-        self.conn.commit()
-
-    def select(self, stmt):
-        return self.exec(stmt, commit=False)
-
-    def setup(self):
-        stmt = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, status JSON)"
-        self.exec(stmt)
 
 
 class PostgreSqlDB:

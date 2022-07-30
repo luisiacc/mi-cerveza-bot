@@ -13,11 +13,8 @@ INTERVAL = int(os.environ.get("INTERVAL", 30))
 
 def pretty_print_statuses(statuses):
     print(
-        f"""
-    malta: {statuses['malt'][0]}
-    cerveza: {statuses['beer'][0]}
-    cerveza bucanero: {statuses['bucanero_beer'][0]}
-    """
+        f"malta: {statuses['malt'][0]}\ncerveza: {statuses['beer'][0]} \n"
+        f"cerveza bucanero: {statuses['bucanero_beer'][0]}"
     )
 
 
