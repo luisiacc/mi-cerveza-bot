@@ -24,7 +24,11 @@ class TheArmagedon:
 
     async def perform_scraping(self):
         users = db.get_users()
-        all_statuses = await get_site_status()
+        try:
+            all_statuses = await get_site_status()
+        except asyncio.TimeoutError as e:
+            print("timeout error", e)
+            return
 
         if not all_statuses:
             print("Failed getting status")
